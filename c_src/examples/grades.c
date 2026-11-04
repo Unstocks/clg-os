@@ -1,0 +1,173 @@
+/*
+ * GRADES.C -- Student Academic Grade and Marks Analyzer for GMU OS 0.1
+ *
+ * Course   : UE25CS2304 -- Operating System with Practice
+ * Project  : GMU OS 0.1 Individual Project-Based Learning (PBL)
+ * Author   : Sanjayakumar S H
+ *
+ * Architectural Context:
+ * - 16-bit freestanding C executable compiled with GCC -m16.
+ * - Loaded by GMU OS kernel at address 2000h:8000h.
+ * - Uses unified segment model (SS == DS) managed by GMU_C_ENTRY.
+ * - Pure integer arithmetic (no hosted libc, no floating-point hardware).
+ */
+
+#include "gmuos.h"
+
+/* Data structure representing an academic course subject */
+struct Subject {
+    const char *name;
+    int marks;
+    int max_marks;
+};
+
+#define NUM_SUBJECTS 3
+
+/* Demonstration marks dataset */
+static const struct Subject subjects[NUM_SUBJECTS] = {
+    { "Operating Systems with Practice", 88, 100 },
+    { "Data Structures & Algorithms   ", 92, 100 },
+    { "Computer Organization & Arch.  ", 84, 100 }
+};
+
+/* Helper: print an integer to screen using pure integer arithmetic and BIOS teletype */
+static void print_int(int n)
+{
+    char buf[8];
+    int pos = 0;
+
+    if (n < 0) {
+        gmu_print_char('-');
+        n = -n;
+    }
+
+    if (n == 0) {
+        gmu_print_char('0');
+        return;
+    }
+
+    while (n > 0 && pos < 7) {
+        buf[pos++] = (char)('0' + (n % 10));
+        n /= 10;
+    }
+
+    while (pos > 0) {
+        gmu_print_char(buf[--pos]);
+    }
+}
+
+/* Application main entry point */
+__attribute__((used, noinline))
+void gmu_main(void)
+{
+    int total_marks = 0;
+    int total_max = 0;
+    int percentage = 0;
+    const char *grade;
+    const char *standing;
+
+    /* 1. Clear screen and render header */
+    gmu_clear();
+    gmu_print("======================================================================");
+    gmu_newline();
+    gmu_print("                  GM UNIVERSITY - DEPARTMENT OF CSE");
+    gmu_newline();
+    gmu_print("                   STUDENT ACADEMIC GRADE ANALYZER");
+    gmu_newline();
+    gmu_print("======================================================================");
+    gmu_newline();
+    gmu_print("Course: UE25CS2304 -- Operating System with Practice (PBL)");
+    gmu_newline();
+    gmu_print("Notice: Demonstration dataset with illustrative grading thresholds.");
+    gmu_newline();
+    gmu_newline();
+
+    /* 2. Display Subject Marks and calculate totals programmatically */
+    gmu_print("SUBJECT EVALUATION (Max: 100 per subject):");
+    gmu_newline();
+    gmu_print("----------------------------------------------------------------------");
+    gmu_newline();
+
+    for (int i = 0; i < NUM_SUBJECTS; i++) {
+        gmu_print(" [");
+        gmu_print_char((char)('1' + i));
+        gmu_print("] ");
+        gmu_print(subjects[i].name);
+        gmu_print(" : ");
+        print_int(subjects[i].marks);
+        gmu_print(" / ");
+        print_int(subjects[i].max_marks);
+        gmu_newline();
+
+        total_marks += subjects[i].marks;
+        total_max += subjects[i].max_marks;
+    }
+
+    gmu_print("----------------------------------------------------------------------");
+    gmu_newline();
+
+    /* 3. Programmatic Performance Calculations (Pure Integer Arithmetic) */
+    if (total_max > 0) {
+        percentage = (total_marks * 100) / total_max;
+    }
+
+    /* 4. Illustrative Grading Decision Ladder */
+    if (percentage >= 90) {
+        grade = "A+ (Outstanding)";
+        standing = "PASSED";
+    } else if (percentage >= 80) {
+        grade = "A  (Excellent)";
+        standing = "PASSED";
+    } else if (percentage >= 70) {
+        grade = "B+ (Very Good)";
+        standing = "PASSED";
+    } else if (percentage >= 60) {
+        grade = "B  (Good)";
+        standing = "PASSED";
+    } else if (percentage >= 50) {
+        grade = "C  (Pass)";
+        standing = "PASSED";
+    } else {
+        grade = "F  (Fail)";
+        standing = "FAILED";
+    }
+
+    /* 5. Display Computed Results */
+    gmu_print("PERFORMANCE SUMMARY (Calculated Programmatically):");
+    gmu_newline();
+    gmu_print("  Total Marks    : ");
+    print_int(total_marks);
+    gmu_print(" / ");
+    print_int(total_max);
+    gmu_newline();
+
+    gmu_print("  Average Score  : ");
+    print_int(percentage);
+    gmu_print(" %");
+    gmu_newline();
+
+    gmu_print("  Result Grade   : ");
+    gmu_print(grade);
+    gmu_newline();
+
+    gmu_print("  Final Standing : ");
+    gmu_print(standing);
+    gmu_newline();
+    gmu_print("======================================================================");
+    gmu_newline();
+    gmu_print("Grading Scale (Illustrative):");
+    gmu_newline();
+    gmu_print("  >=90: A+ | >=80: A | >=70: B+ | >=60: B | >=50: C | <50: F");
+    gmu_newline();
+    gmu_print("======================================================================");
+    gmu_newline();
+    gmu_print("Press any key to return to GMU OS shell...");
+    gmu_newline();
+
+    /* 6. Wait for user keypress before clean stack restoration and shell return */
+    (void)gmu_wait_key();
+}
+
+/* Establish freestanding 16-bit entry stub (initializes SS=DS, ESP=FFF0h) */
+GMU_C_ENTRY(gmu_main)
+

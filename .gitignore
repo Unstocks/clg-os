@@ -1,0 +1,58 @@
+# ====================================================================
+# GMU OS 0.1 -- Custom Git Ignore Specification
+# Tailored for 16-bit x86 Real-Mode Assembly & Freestanding C Development
+# ====================================================================
+
+# Operating System & Editor Artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python Environment (Calculator preview & utilities)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Compiler, Assembler & Linker Intermediates
+*.o
+*.obj
+*.elf
+*.map
+*.tmp
+*.log
+c_src/build/
+
+# Temporary Build Mounts & Scratch Directories
+tmp-loop/
+tmp-gmu-loop/
+build/
+temp/
+tmp/
+
+# Reproducible Generated Disk Images (Build outputs)
+# These are generated reproducibly by scripts/build-gmu-linux.sh
+disk_images/*.flp
+disk_images/*.iso
+disk_images/*.dmg
+!disk_images/.gitkeep
+
+# Temporary Assembler Output Binaries in Source Trees
+source/kernel.bin
+source/bootload/bootload.bin
+
+# Local Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+

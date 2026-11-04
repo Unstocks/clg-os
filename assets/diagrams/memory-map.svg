@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mem-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="seg-os" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="seg-app" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="seg-buf" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#059669" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="seg-bios" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#6D28D9" stop-opacity="0.4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="640" rx="12" fill="url(#mem-bg)" stroke="#1E293B" stroke-width="2" />
+
+  <!-- Title Header -->
+  <text x="500" y="40" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="18" font-weight="700" fill="#F8FAFC" letter-spacing="1">
+    GMU OS 0.1 :: 16-BIT REAL-MODE X86 MEMORY MAP (1 MB SPACE)
+  </text>
+  <text x="500" y="62" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#94A3B8">
+    Verified Segment Allocations, Execution Offsets, and Transient Buffer Regions
+  </text>
+
+  <!-- Memory Map Stack Representation -->
+  <g transform="translate(80, 90)">
+    
+    <!-- Region 1: IVT & BDA -->
+    <g transform="translate(0, 0)">
+      <rect width="840" height="42" rx="6" fill="url(#seg-bios)" stroke="#8B5CF6" stroke-width="1.2" />
+      <text x="20" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#DDD6FE">0x00000 - 0x004FF</text>
+      <text x="230" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#F8FAFC">Interrupt Vector Table (IVT) &amp; BIOS Data Area (BDA)</text>
+      <text x="750" y="26" font-family="'JetBrains Mono', monospace" font-size="11" fill="#C4B5FD">1.25 KB</text>
+    </g>
+
+    <!-- Region 2: Bootloader -->
+    <g transform="translate(0, 48)">
+      <rect width="840" height="38" rx="6" fill="#1E293B" stroke="#64748B" stroke-width="1" />
+      <text x="20" y="24" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#94A3B8">0x07C00 - 0x07DFF</text>
+      <text x="230" y="24" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#E2E8F0">Boot Sector MBR (bootload.asm - Loaded by BIOS INT 19h)</text>
+      <text x="750" y="24" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8">512 Bytes</text>
+    </g>
+
+    <!-- Region 3: C Applications & Transient Commands -->
+    <g transform="translate(0, 92)">
+      <rect width="840" height="70" rx="6" fill="url(#seg-app)" stroke="#3B82F6" stroke-width="1.5" />
+      <text x="20" y="32" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#93C5FD">0x08000 - 0x1FFFF</text>
+      <text x="230" y="28" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#60A5FA">
+        User C Applications &amp; External Binaries (Transient Program Area)
+      </text>
+      <text x="230" y="50" font-family="-apple-system, sans-serif" font-size="11" fill="#CBD5E1">
+        • Linked by gmu16.ld (.text, .rodata, .data, .bss @ 0x8000) • SCICALC.BIN, GRADES2.BIN, GMUINFO.BIN
+      </text>
+      <text x="750" y="40" font-family="'JetBrains Mono', monospace" font-size="11" fill="#93C5FD">Up to 64 KB</text>
+    </g>
+
+    <!-- Region 4: GMU OS Kernel -->
+    <g transform="translate(0, 168)">
+      <rect width="840" height="74" rx="6" fill="url(#seg-os)" stroke="#F59E0B" stroke-width="1.5" />
+      <text x="20" y="34" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#FDE68A">0x20000 - 0x2FFFF</text>
+      <text x="230" y="30" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#FBBF24">
+        GMU OS 0.1 Kernel (0x2000:0000 Segment)
+      </text>
+      <text x="230" y="52" font-family="-apple-system, sans-serif" font-size="11" fill="#FEF3C7">
+        • System Call Vectors 0x0000 - 0x0063 • CLI Shell (GMUOS&gt;) • Video, Screen, Disk &amp; RTC Drivers
+      </text>
+      <text x="750" y="42" font-family="'JetBrains Mono', monospace" font-size="11" fill="#FDE68A">64 KB Segment</text>
+    </g>
+
+    <!-- Region 5: Floppy Disk & FAT12 Buffer -->
+    <g transform="translate(0, 248)">
+      <rect width="840" height="62" rx="6" fill="url(#seg-buf)" stroke="#10B981" stroke-width="1.5" />
+      <text x="20" y="32" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#A7F3D0">0x60000 - 0x6FFFF</text>
+      <text x="230" y="28" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#34D399">
+        FAT12 Disk Buffer &amp; Root Directory Cache (disk_buffer)
+      </text>
+      <text x="230" y="48" font-family="-apple-system, sans-serif" font-size="11" fill="#D1FAE5">
+        • Sectors 19–32 loaded for 2-column DIR parser • File system sector staging
+      </text>
+      <text x="750" y="36" font-family="'JetBrains Mono', monospace" font-size="11" fill="#A7F3D0">64 KB Buffer</text>
+    </g>
+
+    <!-- Region 6: OS Stack -->
+    <g transform="translate(0, 316)">
+      <rect width="840" height="46" rx="6" fill="#1E293B" stroke="#475569" stroke-width="1" />
+      <text x="20" y="28" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#94A3B8">0x80000 - 0x9FFFF</text>
+      <text x="230" y="28" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#F8FAFC">
+        Real-Mode System Stack (SS:SP = 0x2000:0xFFFE) &amp; Free Conventional Memory
+      </text>
+      <text x="750" y="28" font-family="'JetBrains Mono', monospace" font-size="11" fill="#94A3B8">~128 KB</text>
+    </g>
+
+    <!-- Region 7: Video RAM -->
+    <g transform="translate(0, 368)">
+      <rect width="840" height="42" rx="6" fill="url(#seg-bios)" stroke="#8B5CF6" stroke-width="1.2" />
+      <text x="20" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#DDD6FE">0xA0000 - 0xBFFFF</text>
+      <text x="230" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#F8FAFC">
+        Video Memory (VRAM) — Text Mode Buffer at 0xB800:0000 (80x25 Teletype)
+      </text>
+      <text x="750" y="26" font-family="'JetBrains Mono', monospace" font-size="11" fill="#C4B5FD">128 KB</text>
+    </g>
+
+    <!-- Region 8: BIOS ROM & Extended High Memory -->
+    <g transform="translate(0, 416)">
+      <rect width="840" height="46" rx="6" fill="url(#seg-bios)" stroke="#8B5CF6" stroke-width="1.2" />
+      <text x="20" y="28" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#DDD6FE">0xC0000 - 0xFFFFF</text>
+      <text x="230" y="24" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#F8FAFC">
+        BIOS ROM, Video Option ROMs &amp; CPU Power-On Reset Vector (0xFFFF:0000)
+      </text>
+      <text x="230" y="40" font-family="-apple-system, sans-serif" font-size="10" fill="#C4B5FD">
+        Upper Memory Area (UMA) — 256 KB reserved for hardware firmware
+      </text>
+      <text x="750" y="28" font-family="'JetBrains Mono', monospace" font-size="11" fill="#C4B5FD">256 KB</text>
+    </g>
+  </g>
+
+  <!-- Bottom Legend -->
+  <g transform="translate(80, 580)">
+    <circle cx="10" cy="10" r="5" fill="#3B82F6" />
+    <text x="22" y="14" font-family="-apple-system, sans-serif" font-size="11" fill="#94A3B8">User Applications</text>
+
+    <circle cx="160" cy="10" r="5" fill="#F59E0B" />
+    <text x="172" y="14" font-family="-apple-system, sans-serif" font-size="11" fill="#94A3B8">Kernel Code/Data</text>
+
+    <circle cx="310" cy="10" r="5" fill="#10B981" />
+    <text x="322" y="14" font-family="-apple-system, sans-serif" font-size="11" fill="#94A3B8">Disk Staging Buffer</text>
+
+    <circle cx="480" cy="10" r="5" fill="#8B5CF6" />
+    <text x="492" y="14" font-family="-apple-system, sans-serif" font-size="11" fill="#94A3B8">Hardware / BIOS ROM</text>
+  </g>
+</svg>
+

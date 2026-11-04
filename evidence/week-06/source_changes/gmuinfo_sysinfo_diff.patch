@@ -1,0 +1,285 @@
+﻿diff --git a/backups/week-05-complete/c_src/examples/gmuinfo.c b/GMU_OS_WORKING/c_src/examples/gmuinfo.c
+index d6aad86..76df759 100644
+--- a/backups/week-05-complete/c_src/examples/gmuinfo.c
++++ b/GMU_OS_WORKING/c_src/examples/gmuinfo.c
+@@ -1,38 +1,266 @@
+ /*
+- * GMUINFO.C - first C application for GMU OS
++ * GMUINFO.C -- System Information and Telemetry Utility for GMU OS 0.1
+  *
+- * Demonstrates that a C program can be compiled as a flat 16-bit x86
+- * executable, loaded by the original MikeOS-compatible program loader,
+- * and call selected OS services through the small interface in gmuos.h.
++ * Course   : UE25CS2304 -- Operating System with Practice
++ * Project  : GMU OS 0.1 Individual Project-Based Learning (PBL)
++ * Author   : Sanjayakumar S H
++ * Milestone: Week 6 -- Richer SYSINFO in C (Option B: Local Wrappers)
++ *
++ * Architectural Context:
++ * - Freestanding 16-bit C executable compiled with GCC -m16 (-nostdlib).
++ * - Loaded by GMU OS kernel at address 2000h:8000h.
++ * - Implements verified local wrappers for kernel services and BIOS interrupts:
++ *     Vector 0x0057: os_get_api_version
++ *     Vector 0x0054: os_get_time_string
++ *     Vector 0x005D: os_get_date_string
++ *     BIOS int 12h : Conventional memory query
++ * - Strictly distinguishes static metadata from genuine dynamic queries.
+  */
++
+ #include "gmuos.h"
+ 
++/* ------------------------------------------------------------------
++ * Local ABI System Call Wrappers (Verified 16-bit real-mode calling)
++ * ------------------------------------------------------------------ */
++
++/* Query kernel API level via vector 0x0057 (os_get_api_version)
++ * OUT: AL = API version integer (18) */
++static inline int local_get_api_version(void)
++{
++    gmu_u16 ax_val = 0;
++    __asm__ volatile (
++        "xorw %%ax, %%ax\n\t"
++        "movw $0x0057, %%bx\n\t"
++        "callw *%%bx"
++        : "=a" (ax_val)
++        :
++        : "bx", "cx", "dx", "si", "di", "cc", "memory"
++    );
++    return (int)(ax_val & 0xFFu);
++}
++
++/* Query formatted RTC time string via vector 0x0054 (os_get_time_string)
++ * IN: BX = memory offset in DS/ES where string is written */
++static inline void local_get_time_string(char *buf)
++{
++    gmu_u16 off = gmu_offset(buf);
++    __asm__ volatile (
++        "pushw %%es\n\t"
++        "pushw %%ds\n\t"
++        "popw %%es\n\t"
++        "cld\n\t"
++        "movw $0x0054, %%ax\n\t"
++        "callw *%%ax\n\t"
++        "popw %%es"
++        :
++        : "b" (off)
++        : "ax", "cx", "dx", "si", "di", "cc", "memory"
++    );
++}
++
++/* Query formatted RTC calendar date via vector 0x005D (os_get_date_string)
++ * IN: BX = memory offset in DS/ES where string is written */
++static inline void local_get_date_string(char *buf)
++{
++    gmu_u16 off = gmu_offset(buf);
++    __asm__ volatile (
++        "pushw %%es\n\t"
++        "pushw %%ds\n\t"
++        "popw %%es\n\t"
++        "cld\n\t"
++        "movw $0x005D, %%ax\n\t"
++        "callw *%%ax\n\t"
++        "popw %%es"
++        :
++        : "b" (off)
++        : "ax", "cx", "dx", "si", "di", "cc", "memory"
++    );
++}
++
++/* Query conventional base memory size in KB via BIOS int 12h
++ * OUT: AX = contiguous memory in KB (typically 640 KB) */
++static inline int local_get_base_memory_kb(void)
++{
++    gmu_u16 mem_kb = 0;
++    __asm__ volatile (
++        "int $0x12"
++        : "=a" (mem_kb)
++        :
++        : "cc"
++    );
++    return (int)mem_kb;
++}
++
++/* CPU Segment Register Observers */
++static inline gmu_u16 local_get_cs(void)
++{
++    gmu_u16 seg;
++    __asm__ volatile ("movw %%cs, %0" : "=r" (seg));
++    return seg;
++}
++
++static inline gmu_u16 local_get_ds(void)
++{
++    gmu_u16 seg;
++    __asm__ volatile ("movw %%ds, %0" : "=r" (seg));
++    return seg;
++}
++
++static inline gmu_u16 local_get_ss(void)
++{
++    gmu_u16 seg;
++    __asm__ volatile ("movw %%ss, %0" : "=r" (seg));
++    return seg;
++}
++
++/* ------------------------------------------------------------------
++ * Modular Output Helpers (Pure Integer / Teletype)
++ * ------------------------------------------------------------------ */
++
++static void print_int(int n)
++{
++    char buf[8];
++    int pos = 0;
++
++    if (n < 0) {
++        gmu_print_char('-');
++        n = -n;
++    }
++
++    if (n == 0) {
++        gmu_print_char('0');
++        return;
++    }
++
++    while (n > 0 && pos < 7) {
++        buf[pos++] = (char)('0' + (n % 10));
++        n /= 10;
++    }
++
++    while (pos > 0) {
++        gmu_print_char(buf[--pos]);
++    }
++}
++
++static void print_hex16(gmu_u16 val)
++{
++    static const char hex_chars[] = "0123456789ABCDEF";
++    gmu_print("0x");
++    gmu_print_char(hex_chars[(val >> 12) & 0x0F]);
++    gmu_print_char(hex_chars[(val >> 8)  & 0x0F]);
++    gmu_print_char(hex_chars[(val >> 4)  & 0x0F]);
++    gmu_print_char(hex_chars[val         & 0x0F]);
++}
++
++/* ------------------------------------------------------------------
++ * Application Entry Point
++ * ------------------------------------------------------------------ */
++
+ __attribute__((used, noinline))
+ void gmu_main(void)
+ {
++    char time_buf[16];
++    char date_buf[32];
++
++    /* Zero output buffers defensively */
++    for (int i = 0; i < 16; i++) {
++        time_buf[i] = '\0';
++    }
++    for (int i = 0; i < 32; i++) {
++        date_buf[i] = '\0';
++    }
++
++    /* 1. Dynamic Queries to Kernel & Hardware Services */
++    int api_ver   = local_get_api_version();
++    int base_mem  = local_get_base_memory_kb();
++    gmu_u16 cs_reg = local_get_cs();
++    gmu_u16 ds_reg = local_get_ds();
++    gmu_u16 ss_reg = local_get_ss();
++
++    local_get_time_string(time_buf);
++    local_get_date_string(date_buf);
++
++    /* Guarantee defensive null-termination */
++    time_buf[15] = '\0';
++    date_buf[31] = '\0';
++
++    /* 2. Render System Information Screen */
+     gmu_clear();
+-    gmu_print("========================================");
++    gmu_print("======================================================================");
++    gmu_newline();
++    gmu_print("                  GM UNIVERSITY - DEPARTMENT OF CSE");
++    gmu_newline();
++    gmu_print("               GMU OS 0.1 -- SYSTEM TELEMETRY & AUDIT");
++    gmu_newline();
++    gmu_print("======================================================================");
++    gmu_newline();
++
++    /* Section A: Static System Identity */
++    gmu_print("[A] STATIC ARCHITECTURAL METADATA (Compiled Specification):");
++    gmu_newline();
++    gmu_print("  OS Name & Version : GMU OS 0.1 (Learning Derivative)");
++    gmu_newline();
++    gmu_print("  Base Kernel Core  : MikeOS 4.7.0");
+     gmu_newline();
+-    gmu_print("               GMU OS");
++    gmu_print("  Target CPU Model  : x86 16-Bit Real Mode (IBM PC Compatible)");
+     gmu_newline();
+-    gmu_print("  C-Oriented Learning Edition - 0.1");
++    gmu_print("  Course & Project  : UE25CS2304 -- OS with Practice (Individual PBL)");
+     gmu_newline();
+-    gmu_print("  GM University, Davanagere, Karnataka");
++    gmu_print("----------------------------------------------------------------------");
+     gmu_newline();
+-    gmu_print("  UE25CS2304 - Operating System PBL");
++
++    /* Section B: Dynamic Kernel & Hardware Telemetry */
++    gmu_print("[B] DYNAMIC KERNEL & HARDWARE TELEMETRY (Queried at Runtime):");
++    gmu_newline();
++
++    gmu_print("  Kernel API Level  : Version ");
++    print_int(api_ver);
++    gmu_print(" (Queried via vector 0x0057)");
++    gmu_newline();
++
++    gmu_print("  Base Conventional : ");
++    print_int(base_mem);
++    gmu_print(" KB RAM (Queried via BIOS int 12h)");
++    gmu_newline();
++
++    gmu_print("  RTC Current Time  : ");
++    gmu_print(time_buf);
++    gmu_print(" (Queried via vector 0x0054)");
++    gmu_newline();
++
++    gmu_print("  RTC Current Date  : ");
++    gmu_print(date_buf);
++    gmu_print(" (Queried via vector 0x005D)");
++    gmu_newline();
++    gmu_print("----------------------------------------------------------------------");
+     gmu_newline();
+-    gmu_print("========================================");
++
++    /* Section C: Runtime Execution Environment */
++    gmu_print("[C] RUNTIME EXECUTION ENVIRONMENT (CPU Register Inspection):");
+     gmu_newline();
++
++    gmu_print("  Active Segments   : CS=");
++    print_hex16(cs_reg);
++    gmu_print(" | DS=");
++    print_hex16(ds_reg);
++    gmu_print(" | SS=");
++    print_hex16(ss_reg);
+     gmu_newline();
+-    gmu_print("Base system : MikeOS 4.7.0");
++
++    gmu_print("  Binary Load Offset: 0x8000 (Physical address 2000h:8000h)");
+     gmu_newline();
+-    gmu_print("Program     : Written in C");
++
++    gmu_print("  Initial Stack Top : ESP=0xFFF0 (Top of 64K segment via GMU_C_ENTRY)");
+     gmu_newline();
+-    gmu_print("Load offset : 0x8000");
++    gmu_print("======================================================================");
+     gmu_newline();
+-    gmu_print("Press any key to return...");
++
++    gmu_print("Press any key to return to GMU OS shell...");
+     gmu_newline();
++
++    /* 3. Wait for keystroke before shell return */
+     (void)gmu_wait_key();
+ }
+ 
++/* Establish freestanding 16-bit entry stub (initializes SS=DS, ESP=FFF0h) */
+ GMU_C_ENTRY(gmu_main)

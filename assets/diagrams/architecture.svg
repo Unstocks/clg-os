@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="100%" height="100%">
+  <defs>
+    <linearGradient id="layer-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="box-app" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="box-c" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#047857" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="box-kernel" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#B45309" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="box-hw" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#6D28D9" stop-opacity="0.3" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="680" rx="12" fill="#0A0E17" stroke="#1E293B" stroke-width="2" />
+
+  <!-- Diagram Title Header -->
+  <text x="500" y="40" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="18" font-weight="700" fill="#F8FAFC" letter-spacing="1">
+    GMU OS 0.1 :: SYSTEM ARCHITECTURE &amp; SUBSYSTEM LAYERS
+  </text>
+  <text x="500" y="62" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" fill="#94A3B8">
+    Bridging Freestanding 16-Bit C Applications with Real-Mode x86 Assembly Kernel
+  </text>
+
+  <!-- ================= LAYER 1: USER C APPLICATIONS ================= -->
+  <g transform="translate(50, 85)">
+    <rect width="900" height="100" rx="8" fill="url(#layer-grad-1)" stroke="#3B82F6" stroke-width="1.5" />
+    <text x="25" y="28" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#60A5FA">
+      LAYER 1: USERLAND APPLICATIONS (Loaded at 0x8000 in DS:0x2000)
+    </text>
+
+    <!-- App 1: SCICALC.BIN -->
+    <rect x="25" y="42" width="200" height="44" rx="6" fill="url(#box-app)" stroke="#3B82F6" stroke-width="1" />
+    <text x="125" y="62" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#E2E8F0">SCICALC.BIN</text>
+    <text x="125" y="78" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#93C5FD">Scientific Calculator</text>
+
+    <!-- App 2: GRADES2.BIN -->
+    <rect x="245" y="42" width="200" height="44" rx="6" fill="url(#box-app)" stroke="#3B82F6" stroke-width="1" />
+    <text x="345" y="62" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#E2E8F0">GRADES2.BIN</text>
+    <text x="345" y="78" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#93C5FD">Interactive Grade Calc 2.0</text>
+
+    <!-- App 3: GRADES.BIN -->
+    <rect x="465" y="42" width="200" height="44" rx="6" fill="url(#box-app)" stroke="#3B82F6" stroke-width="1" />
+    <text x="565" y="62" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#E2E8F0">GRADES.BIN</text>
+    <text x="565" y="78" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#93C5FD">Academic Grade Analyzer</text>
+
+    <!-- App 4: GMUINFO.BIN -->
+    <rect x="685" y="42" width="190" height="44" rx="6" fill="url(#box-app)" stroke="#3B82F6" stroke-width="1" />
+    <text x="780" y="62" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#E2E8F0">GMUINFO.BIN</text>
+    <text x="780" y="78" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#93C5FD">System Telemetry &amp; RTC</text>
+  </g>
+
+  <!-- Flow Arrow: Layer 1 to Layer 2 -->
+  <path d="M 500 185 L 500 215" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4 4" />
+  <polygon points="500,220 495,212 505,212" fill="#38BDF8" />
+
+  <!-- ================= LAYER 2: FREESTANDING C RUNTIME ================= -->
+  <g transform="translate(50, 225)">
+    <rect width="900" height="85" rx="8" fill="url(#layer-grad-1)" stroke="#10B981" stroke-width="1.5" />
+    <text x="25" y="26" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#34D399">
+      LAYER 2: FREESTANDING 16-BIT C RUNTIME BRIDGE
+    </text>
+
+    <!-- Component 1: gmuos.h -->
+    <rect x="25" y="38" width="415" height="36" rx="6" fill="url(#box-c)" stroke="#10B981" stroke-width="1" />
+    <text x="232" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#E2E8F0">gmuos.h</text>
+    <text x="232" y="68" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#A7F3D0">ABI Wrappers (Inline Assembly call *0x00XX vectors)</text>
+
+    <!-- Component 2: gmu16.ld -->
+    <rect x="460" y="38" width="415" height="36" rx="6" fill="url(#box-c)" stroke="#10B981" stroke-width="1" />
+    <text x="667" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#E2E8F0">gmu16.ld</text>
+    <text x="667" y="68" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#A7F3D0">GNU LD Real-Mode Script (.text, .rodata, .data, .bss @ 0x8000)</text>
+  </g>
+
+  <!-- Flow Arrow: Layer 2 to Layer 3 -->
+  <path d="M 500 310 L 500 340" stroke="#34D399" stroke-width="2" stroke-dasharray="4 4" />
+  <polygon points="500,345 495,337 505,337" fill="#34D399" />
+
+  <!-- ================= LAYER 3: KERNEL SYSTEM CALL VECTOR TABLE ================= -->
+  <g transform="translate(50, 350)">
+    <rect width="900" height="70" rx="8" fill="url(#layer-grad-1)" stroke="#F59E0B" stroke-width="1.5" />
+    <text x="25" y="24" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#FBBF24">
+      LAYER 3: KERNEL SYSTEM CALL DISPATCH TABLE (0x2000:0000 - 0x2000:0063)
+    </text>
+    <text x="25" y="46" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8">
+      0x0003: os_print_string  •  0x0006: os_move_cursor  •  0x0009: os_clear_screen  •  0x000C: os_print_horiz_line
+    </text>
+    <text x="25" y="60" font-family="'JetBrains Mono', monospace" font-size="10" fill="#94A3B8">
+      0x0012: os_wait_for_key  •  0x0015: os_check_for_key  •  0x0054: os_get_time_string  •  0x005D: os_get_date_string
+    </text>
+  </g>
+
+  <!-- Flow Arrow: Layer 3 to Layer 4 -->
+  <path d="M 500 420 L 500 445" stroke="#FBBF24" stroke-width="2" stroke-dasharray="4 4" />
+  <polygon points="500,450 495,442 505,442" fill="#FBBF24" />
+
+  <!-- ================= LAYER 4: KERNEL CORE SUBSYSTEMS ================= -->
+  <g transform="translate(50, 455)">
+    <rect width="900" height="95" rx="8" fill="url(#layer-grad-1)" stroke="#F97316" stroke-width="1.5" />
+    <text x="25" y="24" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#FB923C">
+      LAYER 4: KERNEL SUBSYSTEMS (source/features/*.asm)
+    </text>
+
+    <!-- Subsystem 1: CLI Shell -->
+    <rect x="25" y="38" width="165" height="44" rx="6" fill="#1E293B" stroke="#F97316" stroke-width="1" />
+    <text x="107" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F8FAFC">CLI Shell</text>
+    <text x="107" y="70" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#CBD5E1">GMUOS&gt;, HELP, ABOUT</text>
+
+    <!-- Subsystem 2: FAT12 Disk Engine -->
+    <rect x="202" y="38" width="165" height="44" rx="6" fill="#1E293B" stroke="#F97316" stroke-width="1" />
+    <text x="284" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F8FAFC">FAT12 Engine</text>
+    <text x="284" y="70" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#CBD5E1">2-Col DIR, File Loader</text>
+
+    <!-- Subsystem 3: Screen & Video -->
+    <rect x="379" y="38" width="165" height="44" rx="6" fill="#1E293B" stroke="#F97316" stroke-width="1" />
+    <text x="461" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F8FAFC">Screen / Teletype</text>
+    <text x="461" y="70" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#CBD5E1">80x25 Text Mode</text>
+
+    <!-- Subsystem 4: Keyboard -->
+    <rect x="556" y="38" width="165" height="44" rx="6" fill="#1E293B" stroke="#F97316" stroke-width="1" />
+    <text x="638" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F8FAFC">Input Subsystem</text>
+    <text x="638" y="70" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#CBD5E1">Keystroke &amp; Scan Codes</text>
+
+    <!-- Subsystem 5: Real-Time Clock -->
+    <rect x="733" y="38" width="142" height="44" rx="6" fill="#1E293B" stroke="#F97316" stroke-width="1" />
+    <text x="804" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F8FAFC">RTC Subsystem</text>
+    <text x="804" y="70" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="9" fill="#CBD5E1">CMOS BCD Clocks</text>
+  </g>
+
+  <!-- Flow Arrow: Layer 4 to Layer 5 -->
+  <path d="M 500 550 L 500 575" stroke="#FB923C" stroke-width="2" stroke-dasharray="4 4" />
+  <polygon points="500,580 495,572 505,572" fill="#FB923C" />
+
+  <!-- ================= LAYER 5: BIOS INTERFACE & REAL-MODE HARDWARE ================= -->
+  <g transform="translate(50, 585)">
+    <rect width="900" height="75" rx="8" fill="url(#layer-grad-1)" stroke="#8B5CF6" stroke-width="1.5" />
+    <text x="25" y="24" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#C084FC">
+      LAYER 5: BIOS INTERFACE &amp; 16-BIT REAL-MODE X86 HARDWARE
+    </text>
+    <g transform="translate(25, 36)" font-family="'JetBrains Mono', monospace" font-size="10" fill="#DDD6FE">
+      <rect x="0" y="0" width="165" height="26" rx="4" fill="url(#box-hw)" stroke="#8B5CF6" stroke-width="0.75" />
+      <text x="82" y="17" text-anchor="middle">INT 10h (Video BIOS)</text>
+
+      <rect x="175" y="0" width="165" height="26" rx="4" fill="url(#box-hw)" stroke="#8B5CF6" stroke-width="0.75" />
+      <text x="257" y="17" text-anchor="middle">INT 12h (RAM Size)</text>
+
+      <rect x="350" y="0" width="165" height="26" rx="4" fill="url(#box-hw)" stroke="#8B5CF6" stroke-width="0.75" />
+      <text x="432" y="17" text-anchor="middle">INT 13h (Disk Drive)</text>
+
+      <rect x="525" y="0" width="165" height="26" rx="4" fill="url(#box-hw)" stroke="#8B5CF6" stroke-width="0.75" />
+      <text x="607" y="17" text-anchor="middle">INT 16h (Keyboard)</text>
+
+      <rect x="700" y="0" width="150" height="26" rx="4" fill="url(#box-hw)" stroke="#8B5CF6" stroke-width="0.75" />
+      <text x="775" y="17" text-anchor="middle">INT 1Ah (RTC Clock)</text>
+    </g>
+  </g>
+</svg>
+

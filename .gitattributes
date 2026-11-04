@@ -1,0 +1,37 @@
+# ====================================================================
+# GMU OS 0.1 -- Git Attributes Specification
+# Enforces LF endings across x86 real-mode sources, C runtime & scripts
+# ====================================================================
+
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Assembly, C runtime, linker script and Shell scripts must have LF
+*.asm text eol=lf
+*.inc text eol=lf
+*.c   text eol=lf
+*.h   text eol=lf
+*.ld  text eol=lf
+*.sh  text eol=lf
+*.txt text eol=lf
+*.md  text eol=lf
+*.py  text eol=lf
+
+# Windows batch files must retain CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets
+*.bin binary
+*.BIN binary
+*.flp binary
+*.iso binary
+*.dmg binary
+*.pcx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.4th binary
+*.512 binary
+

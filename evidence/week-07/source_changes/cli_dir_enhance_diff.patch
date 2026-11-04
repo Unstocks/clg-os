@@ -1,0 +1,271 @@
+﻿diff --git a/backups/week-06-complete/source/features/cli.asm b/GMU_OS_WORKING/source/features/cli.asm
+index 737baa6..35a1c0f 100644
+--- a/backups/week-06-complete/source/features/cli.asm
++++ b/GMU_OS_WORKING/source/features/cli.asm
+@@ -306,55 +306,215 @@ kern_warning:
+ ; ------------------------------------------------------------------
+ 
+ list_directory:
+-	mov cx,	0			; Counter
+-
+-	mov ax, dirlist			; Get list of files on disk
+-	call os_get_file_list
++	push es
++	push ds
++	pop es				; Guarantee ES == DS = 0x2000
++	pusha
+ 
+-	mov si, dirlist
++	; Reset memory-backed state
++	mov word [dir_file_count], 0
++	mov byte [dir_col_state], 0
+ 
+-.set_column:
+-	; Put the cursor in the correct column.
+-	call os_get_cursor_pos
++	; Read root directory (14 sectors) into disk_buffer
++	call disk_read_root_dir
++	jnc .read_ok
++	mov si, dir_readfail_msg
++	call os_print_string
++	jmp .done
+ 
+-	mov ax, cx
+-	and al, 0x03
+-	mov bl, 20
+-	mul bl
++.read_ok:
++	mov di, disk_buffer		; Point ES:DI to root directory buffer
+ 
+-	mov dl, al
+-	call os_move_cursor
++	; Print Table Header (61 chars)
++	mov si, dir_header_1
++	call os_print_string
++	mov si, dir_header_2
++	call os_print_string
+ 
+-	mov ah, 0Eh			; BIOS teletype function
+-.next_char:
+-	lodsb
++.entry_loop:
++	; Strict boundary check: 14 sectors * 512 bytes = 7168 bytes
++	cmp di, disk_buffer + 7168
++	jae .finish
+ 
+-	cmp al, ','
+-	je .next_filename
++	; Re-verify ES matches DS before memory access
++	push ds
++	pop es
+ 
+-	cmp al, 0
+-	je .done
++	; Filter: Attribute byte [es:di+11]
++	mov al, [es:di+11]
++	cmp al, 0Fh			; Skip VFAT LFN
++	je .next_entry
++	test al, 18h			; Skip subdirectories (10h) & volume labels (08h)
++	jnz .next_entry
+ 
+-	int 10h
+-	jmp .next_char
++	; Filter: First character [es:di]
++	mov al, [es:di]
++	cmp al, 0			; 0 = entry never used (end of directory)
++	je .finish
++	cmp al, 0E5h			; E5h = deleted file entry
++	je .next_entry
++	cmp al, ' '			; Skip invalid / control chars
++	jle .next_entry
++	cmp al, '~'			; Skip non-printable ASCII
++	ja .next_entry
++	cmp al, '.'			; Skip dot entries
++	je .next_entry
+ 
+-.next_filename:
+-	inc cx
++	; Valid file found -> increment memory-backed counter
++	inc word [dir_file_count]
+ 
+-	mov ax, cx
+-	and ax, 03h
++	; Check column state (0 = left column, 1 = right column)
++	cmp byte [dir_col_state], 0
++	jne .do_right
+ 
+-	cmp ax, 0			; New line every 4th filename.
+-	jne .set_column
++	; --- LEFT COLUMN OUTPUT (28 chars + 7-char divider) ---
++	call os_print_space
++	call os_print_space		; 2-char leading indent (cols 0..1)
++	call dir_print_name_12		; 8.3 filename padded to 12 chars (cols 2..13)
++	call os_print_space
++	call os_print_space		; 2-char spacer (cols 14..15)
++	call dir_print_size_12		; 32-bit size right-aligned to 10 chars + " B" (cols 16..27)
++	mov si, dir_divider		; "   |   " (cols 28..34, bar at col 31)
++	call os_print_string
++	mov byte [dir_col_state], 1	; Switch to right column
++	jmp .next_entry
+ 
++.do_right:
++	; --- RIGHT COLUMN OUTPUT (26 chars) ---
++	call dir_print_name_12		; 8.3 filename padded to 12 chars (cols 35..46)
++	call os_print_space
++	call os_print_space		; 2-char spacer (cols 47..48)
++	call dir_print_size_12		; 32-bit size right-aligned to 10 chars + " B" (cols 49..60)
++	call os_print_newline		; Advance to next display row
++	mov byte [dir_col_state], 0	; Switch to left column
++
++.next_entry:
++	add di, 32			; Advance by 32-byte FAT12 entry stride
++	jmp .entry_loop
++
++.finish:
++	; If odd number of files, emit newline so summary starts on fresh line
++	cmp byte [dir_col_state], 1
++	jne .print_summary
+ 	call os_print_newline
+-	jmp .set_column
++
++.print_summary:
++	mov si, dir_summary_div		; 59-dash rule (cols 2..60)
++	call os_print_string
++
++	cmp word [dir_file_count], 0
++	jne .show_total
++	mov si, dir_empty_msg		; "  No files found on disk."
++	call os_print_string
++	jmp .done
++
++.show_total:
++	mov si, dir_summary_pre		; "  Total: "
++	call os_print_string
++	mov ax, [dir_file_count]
++	call os_int_to_string		; OUT: AX = pointer to string in .t
++	mov si, ax
++	call os_print_string		; Print numeric count
++	mov si, dir_summary_post	; " file(s) found."
++	call os_print_string
+ 
+ .done:
+-	call os_print_newline
++	popa
++	pop es
+ 	jmp get_cmd
+ 
+ 
++; ------------------------------------------------------------------
++; Helper: Print 8.3 filename from [ES:DI] padded to exactly 12 chars
++; IN: ES:DI = directory entry pointer. OUT: All registers preserved.
++dir_print_name_12:
++	pusha
++	xor dx, dx			; DL = characters printed counter
++	mov bx, di
++	add bx, 8			; BX points to 3-char extension
++	mov cx, 8			; 8 characters max for base name
++
++.name_loop:
++	mov al, [es:di]
++	inc di
++	cmp al, ' '
++	je .check_ext
++	call .emit_char
++	loop .name_loop
++
++.check_ext:
++	cmp byte [es:bx], ' '		; Check if valid extension exists
++	jle .pad_spaces
++	mov al, '.'
++	call .emit_char
++	mov di, bx
++	mov cx, 3
++
++.ext_loop:
++	mov al, [es:di]
++	inc di
++	cmp al, ' '
++	jle .pad_spaces
++	call .emit_char
++	loop .ext_loop
++
++.pad_spaces:
++	cmp dl, 12
++	jae .name_done
++	call os_print_space
++	inc dl
++	jmp .pad_spaces
++
++.emit_char:
++	mov ah, 0Eh
++	push dx
++	int 10h
++	pop dx
++	inc dl
++	ret
++
++.name_done:
++	popa
++	ret
++
++
++; ------------------------------------------------------------------
++; Helper: Print 32-bit file size from [ES:DI+28] right-aligned to 10 chars + " B"
++; IN: ES:DI = directory entry pointer. OUT: All registers preserved.
++dir_print_size_12:
++	pusha
++	push es
++	push ds
++	pop es				; Ensure ES == DS for string operations
++
++	mov ax, [es:di+28]		; Low word of 32-bit size
++	mov dx, [es:di+30]		; High word of 32-bit size
++	mov bx, 10			; Base 10 decimal conversion
++	mov di, dir_size_buf		; Static 16-byte destination buffer in DS
++	call os_long_int_to_string	; Converts DX:AX -> [DI], DI is preserved by popa
++
++	mov ax, di			; IN for os_string_length is AX
++	call os_string_length		; OUT: AX = length of converted string
++
++	neg ax
++	add ax, 10			; 10 - length = number of leading spaces
++	jle .no_padding			; If length >= 10, skip space padding
++	mov cx, ax
++.pad_loop:
++	call os_print_space
++	loop .pad_loop
++
++.no_padding:
++	mov si, dir_size_buf
++	call os_print_string		; Print numeric string
++	mov si, dir_bytes_unit		; " B"
++	call os_print_string
++
++	pop es
++	popa
++	ret
++
++
+ ; ------------------------------------------------------------------
+ 
+ cat_file:
+@@ -967,6 +1127,19 @@ exit:
+ 
+ 	prompt			db 'GMUOS> ', 0
+ 
++	dir_readfail_msg	db 'Unable to read disk directory', 13, 10, 0
++	dir_header_1		db 13, 10, '  Filename            Size (B)   |   Filename            Size (B)', 13, 10, 0
++	dir_header_2		db '  --------------------------   +   --------------------------', 13, 10, 0
++	dir_divider		db '   |   ', 0
++	dir_summary_div		db '  -----------------------------------------------------------', 13, 10, 0
++	dir_summary_pre		db '  Total: ', 0
++	dir_summary_post	db ' file(s) found.', 13, 10, 0
++	dir_empty_msg		db '  No files found on disk.', 13, 10, 0
++	dir_bytes_unit		db ' B', 0
++	dir_file_count		dw 0
++	dir_col_state		db 0
++	dir_size_buf		times 16 db 0
++
+ 	help_text		db 'GMU OS 0.1 Commands:', 13, 10
+ 				db '  Files:   DIR, LS, CAT, COPY, REN, DEL, SIZE', 13, 10
+ 				db '  System:  CLS, HELP, ABOUT, VER, TIME, DATE, EXIT', 13, 10

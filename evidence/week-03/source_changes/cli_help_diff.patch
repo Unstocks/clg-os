@@ -1,0 +1,15 @@
+--- backups/week-02-complete/source/features/cli.asm
++++ GMU_OS_WORKING/source/features/cli.asm
+@@ -955,7 +955,10 @@ exit:
+ 
+ 	prompt			db 'GMUOS> ', 0
+ 
+-	help_text		db 'Commands: DIR, LS, COPY, REN, DEL, CAT, SIZE, CLS, HELP, TIME, DATE, VER, EXIT', 13, 10, 0
++	help_text		db 'GMU OS 0.1 Commands:', 13, 10
++				db '  Files:   DIR, LS, CAT, COPY, REN, DEL, SIZE', 13, 10
++				db '  System:  CLS, HELP, VER, TIME, DATE, EXIT', 13, 10
++				db '  Launch:  Type a program name (.BIN or .BAS)', 13, 10, 0
+ 	invalid_msg		db 'No such command or program', 13, 10, 0
+ 	nofilename_msg		db 'No filename or not enough filenames', 13, 10, 0
+ 	notfound_msg		db 'File not found', 13, 10, 0
+

@@ -1,0 +1,10 @@
+--- GMU_OS_ORIGINAL/source/features/cli.asm
++++ GMU_OS_WORKING/source/features/cli.asm
+@@ -954,5 +954,5 @@
+ 	pcx_extension		db '.PCX', 0
+ 
+-	prompt			db '> ', 0
++	prompt			db 'GMUOS> ', 0
+ 
+ 	help_text		db 'Commands: DIR, LS, COPY, REN, DEL, CAT, SIZE, CLS, HELP, TIME, DATE, VER, EXIT', 13, 10, 0
+
